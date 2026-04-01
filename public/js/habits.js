@@ -36,7 +36,9 @@ async function seedDefaultHabits(userId) {
     { name: 'MENTAL: No negative self-talk', type: 'avoid', position: 3 },
   ].map(h => ({ ...h, user_id: userId }));
 
-  const { data } = await sb.from('habits').insert(defaults).select();
+  const { data } = await sb.from('habits')
+    .upsert(defaults, { onConflict: 'user_id,name,type', ignoreDuplicates: true })
+    .select();
   if (data) {
     habits.implement = data.filter(h => h.type === 'implement');
     habits.avoid     = data.filter(h => h.type === 'avoid');
