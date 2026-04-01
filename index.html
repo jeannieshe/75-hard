@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>75 Hard Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+
+    header .date {
+      margin-top: 6px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .day-badge {
+      display: inline-block;
+      margin-top: 10px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 999px;
+      padding: 4px 16px;
+      font-size: 0.85rem;
+      color: #aaa;
+    }
+
+    .day-badge span {
+      color: #fff;
+      font-weight: 700;
+    }
+
+    .progress-bar-wrap {
+      max-width: 480px;
+      margin: 16px auto 0;
+      background: #1a1a1a;
+      border-radius: 999px;
+      height: 6px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f59e0b, #ef4444);
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 620px) {
+      .sections { grid-template-columns: 1fr; }
+    }
+
+    .section {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .section h2 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section.implement h2 { color: #34d399; }
+    .section.avoid h2 { color: #f87171; }
+
+    .habit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .habit-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: #111;
+      border: 1px solid #2a2a2a;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      user-select: none;
+    }
+
+    .habit-item:hover { background: #1e1e1e; }
+
+    .habit-item.checked {
+      border-color: #34d39440;
+      background: #0d1f18;
+    }
+
+    .section.avoid .habit-item.checked {
+      border-color: #f8717140;
+      background: #1f0d0d;
+    }
+
+    .checkbox {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid #444;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .checked .checkbox {
+      background: #34d399;
+      border-color: #34d399;
+    }
+
+    .section.avoid .checked .checkbox {
+      background: #f87171;
+      border-color: #f87171;
+    }
+
+    .checkbox svg {
+      display: none;
+    }
+
+    .checked .checkbox svg {
+      display: block;
+    }
+
+    .habit-label {
+      font-size: 0.95rem;
+      flex: 1;
+    }
+
+    .checked .habit-label {
+      text-decoration: line-through;
+      color: #555;
+    }
+
+    .add-habit {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .add-habit input {
+      flex: 1;
+      background: #111;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: #e0e0e0;
+      font-size: 0.875rem;
+      outline: none;
+    }
+
+    .add-habit input:focus { border-color: #555; }
+
+    .add-habit input::placeholder { color: #444; }
+
+    .add-habit button {
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 8px;
+      color: #aaa;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+      transition: background 0.15s;
+    }
+
+    .add-habit button:hover { background: #333; color: #fff; }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #333;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 0 2px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .habit-item:hover .delete-btn { color: #555; }
+    .delete-btn:hover { color: #f87171 !important; }
+
+    .day-nav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .day-nav button {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #aaa;
+      padding: 6px 14px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.15s;
+    }
+
+    .day-nav button:hover { background: #2a2a2a; color: #fff; }
+    .day-nav button:disabled { opacity: 0.3; cursor: default; }
+
+    .today-btn {
+      font-size: 0.75rem;
+      padding: 4px 10px !important;
+      color: #f59e0b !important;
+      border-color: #f59e0b40 !important;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      font-size: 0.75rem;
+      color: #333;
+    }
+
+    .export-btn {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      color: #666;
+      padding: 6px 16px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      margin-top: 8px;
+      transition: background 0.15s;
+    }
+
+    .export-btn:hover { background: #2a2a2a; color: #aaa; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>75 Hard</h1>
+  <div class="date" id="dateDisplay"></div>
+  <div class="day-badge">Day <span id="dayNumber">1</span> of 75</div>
+  <div class="progress-bar-wrap" style="margin-top:12px;">
+    <div class="progress-bar-fill" id="progressBar" style="width:0%"></div>
+  </div>
+</header>
+
+<div class="day-nav">
+  <button id="prevDay">← Prev</button>
+  <button id="todayBtn" class="today-btn">Today</button>
+  <button id="nextDay">Next →</button>
+</div>
+
+<div class="sections">
+  <div class="section implement">
+    <h2>
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      Habits to Build
+    </h2>
+    <div class="habit-list" id="implementList"></div>
+    <div class="add-habit">
+      <input type="text" id="implementInput" placeholder="Add a habit…" />
+      <button onclick="addHabit('implement')">+</button>
+    </div>
+  </div>
+
+  <div class="section avoid">
+    <h2>
+      <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      Habits to Avoid
+    </h2>
+    <div class="habit-list" id="avoidList"></div>
+    <div class="add-habit">
+      <input type="text" id="avoidInput" placeholder="Add something to avoid…" />
+      <button onclick="addHabit('avoid')">+</button>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div>Data saved locally in your browser.</div>
+  <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+</footer>
+
+<script>
+  // ── Storage helpers ──────────────────────────────────────────────
+  const KEY_HABITS   = '75hard_habits';
+  const KEY_CHECKS   = '75hard_checks';
+  const KEY_START    = '75hard_start';
+
+  function loadHabits() {
+    try { return JSON.parse(localStorage.getItem(KEY_HABITS)) || { implement: [], avoid: [] }; }
+    catch { return { implement: [], avoid: [] }; }
+  }
+
+  function saveHabits(h) { localStorage.setItem(KEY_HABITS, JSON.stringify(h)); }
+
+  function loadChecks() {
+    try { return JSON.parse(localStorage.getItem(KEY_CHECKS)) || {}; }
+    catch { return {}; }
+  }
+
+  function saveChecks(c) { localStorage.setItem(KEY_CHECKS, JSON.stringify(c)); }
+
+  function getStartDate() {
+    let s = localStorage.getItem(KEY_START);
+    if (!s) { s = todayKey(); localStorage.setItem(KEY_START, s); }
+    return s;
+  }
+
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function keyForDate(dateStr) { return dateStr; }
+
+  function dayNumber(dateStr) {
+    const start = new Date(getStartDate() + 'T00:00:00');
+    const target = new Date(dateStr + 'T00:00:00');
+    return Math.floor((target - start) / 86400000) + 1;
+  }
+
+  // ── State ────────────────────────────────────────────────────────
+  let habits = loadHabits();
+  let checks = loadChecks();
+  let viewDate = todayKey();
+
+  // ── Render ───────────────────────────────────────────────────────
+  function render() {
+    const dateObj = new Date(viewDate + 'T00:00:00');
+    document.getElementById('dateDisplay').textContent =
+      dateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+
+    const dn = dayNumber(viewDate);
+    document.getElementById('dayNumber').textContent = Math.max(1, Math.min(75, dn));
+    const pct = Math.max(0, Math.min(100, ((dn - 1) / 75) * 100));
+    document.getElementById('progressBar').style.width = pct + '%';
+
+    const isToday = viewDate === todayKey();
+    document.getElementById('nextDay').disabled = isToday;
+
+    renderSection('implement');
+    renderSection('avoid');
+  }
+
+  function renderSection(type) {
+    const list = document.getElementById(type + 'List');
+    const dayChecks = checks[keyForDate(viewDate)] || {};
+    list.innerHTML = '';
+    habits[type].forEach((habit, i) => {
+      const id = `${type}_${i}`;
+      const isChecked = !!dayChecks[id];
+      const item = document.createElement('div');
+      item.className = 'habit-item' + (isChecked ? ' checked' : '');
+      item.innerHTML = `
+        <div class="checkbox">
+          <svg width="12" height="12" fill="none" stroke="#fff" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <span class="habit-label">${escHtml(habit)}</span>
+        <button class="delete-btn" title="Remove habit" onclick="removeHabit('${type}', ${i}, event)">✕</button>
+      `;
+      item.addEventListener('click', (e) => {
+        if (e.target.closest('.delete-btn')) return;
+        toggleCheck(type, i);
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── Actions ──────────────────────────────────────────────────────
+  function toggleCheck(type, index) {
+    const key = keyForDate(viewDate);
+    if (!checks[key]) checks[key] = {};
+    const id = `${type}_${index}`;
+    checks[key][id] = !checks[key][id];
+    saveChecks(checks);
+    renderSection(type);
+  }
+
+  function addHabit(type) {
+    const input = document.getElementById(type + 'Input');
+    const val = input.value.trim();
+    if (!val) return;
+    habits[type].push(val);
+    saveHabits(habits);
+    input.value = '';
+    renderSection(type);
+  }
+
+  function removeHabit(type, index, e) {
+    e.stopPropagation();
+    if (!confirm(`Remove "${habits[type][index]}"?`)) return;
+    habits[type].splice(index, 1);
+    saveHabits(habits);
+    render();
+  }
+
+  // ── Day navigation ───────────────────────────────────────────────
+  function shiftDay(delta) {
+    const d = new Date(viewDate + 'T00:00:00');
+    d.setDate(d.getDate() + delta);
+    const newKey = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (newKey > todayKey()) return;
+    viewDate = newKey;
+    render();
+  }
+
+  document.getElementById('prevDay').addEventListener('click', () => shiftDay(-1));
+  document.getElementById('nextDay').addEventListener('click', () => shiftDay(1));
+  document.getElementById('todayBtn').addEventListener('click', () => { viewDate = todayKey(); render(); });
+
+  // ── Enter key to add ─────────────────────────────────────────────
+  document.getElementById('implementInput').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit('implement'); });
+  document.getElementById('avoidInput').addEventListener('keydown', e => { if (e.key === 'Enter') addHabit('avoid'); });
+
+  // ── CSV Export ───────────────────────────────────────────────────
+  function exportCSV() {
+    const rows = [['Date', 'Day', 'Type', 'Habit', 'Completed']];
+    const startDate = getStartDate();
+
+    Object.keys(checks).sort().forEach(dateStr => {
+      const dn = dayNumber(dateStr);
+      const dayChecks = checks[dateStr];
+      ['implement', 'avoid'].forEach(type => {
+        habits[type].forEach((habit, i) => {
+          const id = `${type}_${i}`;
+          rows.push([dateStr, dn, type, habit, dayChecks[id] ? 'Yes' : 'No']);
+        });
+      });
+    });
+
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '75hard_export.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ── Seed default habits if first load ────────────────────────────
+  if (habits.implement.length === 0 && habits.avoid.length === 0) {
+    habits.implement = [
+      '2 workouts (one must be outdoors)',
+      'Drink 1 gallon of water',
+      'Read 10 pages (non-fiction)',
+      'Follow a diet',
+      'Take a progress photo',
+    ];
+    habits.avoid = [
+      'Alcohol',
+      'Cheat meals',
+      'Quitting',
+    ];
+    saveHabits(habits);
+  }
+
+  render();
+</script>
+</body>
+</html>
